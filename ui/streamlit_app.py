@@ -67,6 +67,16 @@ st.caption("NASDAQ + AMEX · Daily Bars · Event-Driven · Zero Lookahead Bias")
 
 if not config.ALPACA_API_KEY:
     st.error("Alpaca API key is missing. Go to Streamlit Cloud → Manage app → Settings → Secrets and add ALPACA_API_KEY and ALPACA_SECRET_KEY.")
+else:
+    try:
+        from alpaca.trading.client import TradingClient
+        from alpaca.trading.requests import GetAssetsRequest
+        from alpaca.trading.enums import AssetClass, AssetStatus
+        _tc = TradingClient(api_key=config.ALPACA_API_KEY, secret_key=config.ALPACA_SECRET_KEY, paper=True)
+        _assets = list(_tc.get_all_assets(GetAssetsRequest(asset_class=AssetClass.US_EQUITY, status=AssetStatus.ACTIVE)))
+        st.success(f"Alpaca API OK — {len(_assets)} US equities returned.")
+    except Exception as _e:
+        st.error(f"Alpaca API error: {_e}")
 
 # ── Sidebar parameters ────────────────────────────────────────────────────────
 st.sidebar.header("⚙️ Parameters")
