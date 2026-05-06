@@ -123,11 +123,20 @@ with st.sidebar.expander("🔎 Universe", expanded=False):
 
 run_btn = st.sidebar.button("🚀 Run Backtest", type="primary", use_container_width=True)
 clear_btn = st.sidebar.button("🗑 Clear Results", use_container_width=True)
+cache_btn = st.sidebar.button("🔄 Clear Data Cache", use_container_width=True)
 
 # ── Clear results ─────────────────────────────────────────────────────────────
 if clear_btn:
     for _key in ("results", "metrics", "trades_df", "equity_df"):
         st.session_state[_key] = None
+    st.rerun()
+
+# ── Clear data cache ──────────────────────────────────────────────────────────
+if cache_btn:
+    import shutil
+    shutil.rmtree(config.DATA_DIR, ignore_errors=True)
+    config.DATA_DIR.mkdir(exist_ok=True)
+    st.sidebar.success("Cache cleared — ready to re-download.")
     st.rerun()
 
 # ── Apply config overrides (only affects the backtest run, not cached results) ─
