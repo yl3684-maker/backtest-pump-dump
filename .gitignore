@@ -1,0 +1,18 @@
+# Credentials — never commit these
+.env
+.streamlit/secrets.toml
+
+# Data cache
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Outputs
+*.csv
+*.log
