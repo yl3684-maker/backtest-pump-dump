@@ -71,20 +71,24 @@ class AlpacaDataLoader:
                 logger.warning("Cached ticker list is empty — re-fetching from Alpaca")
                 cache_file.unlink(missing_ok=True)
 
-        logger.info("Fetching asset list from Alpaca…")
+        logger.info(f"Fetching asset list from Alpaca — API key present: {bool(config.ALPACA_API_KEY)}")
         assets = self.trading_client.get_all_assets(
             GetAssetsRequest(asset_class=AssetClass.US_EQUITY, status=AssetStatus.ACTIVE)
         )
-        target = {"NASDAQ", "NYSE ARCA", "AMEX", "NYSE", "ARCA"}
+        assets = list(assets)
+        logger.info(f"Total assets returned from Alpaca: {len(assets)}")
+        if assets:
+            sample_exchanges = list({a.exchange.value for a in assets[:50]})
+            logger.info(f"Sample exchange values: {sample_exchanges}")
+
         tickers = [
             a.symbol for a in assets
-            if a.exchange.value.upper() in {t.upper() for t in target}
-            and a.tradable
+            if a.tradable
             and not a.symbol.endswith((".", "/"))
             and len(a.symbol) <= 5
         ]
         if not tickers:
-            logger.error("get_tradeable_tickers returned 0 — check API keys and exchange filter")
+            logger.error("get_tradeable_tickers returned 0 — API key may be invalid")
             return []
         pd.DataFrame({"symbol": tickers}).to_parquet(cache_file, index=False)
         logger.info(f"Universe (fresh): {len(tickers)} tickers")
