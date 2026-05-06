@@ -5,16 +5,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import streamlit as st
-
-# Inject Streamlit Cloud secrets into env vars so config.py can read them.
-# This runs before `import config` so the values are available at module load.
-try:
-    for _k in ("ALPACA_API_KEY", "ALPACA_SECRET_KEY"):
-        if _k in st.secrets:
-            os.environ[_k] = st.secrets[_k]
-except FileNotFoundError:
-    pass  # local run — credentials come from .env via python-dotenv
-
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
@@ -24,6 +14,16 @@ import logging
 import config
 from backtest.backtester import Backtester
 from analytics.metrics import compute_metrics
+
+# Override config credentials with Streamlit Cloud secrets if available.
+# This runs on every script execution so it always takes effect.
+try:
+    if "ALPACA_API_KEY" in st.secrets:
+        config.ALPACA_API_KEY = st.secrets["ALPACA_API_KEY"]
+    if "ALPACA_SECRET_KEY" in st.secrets:
+        config.ALPACA_SECRET_KEY = st.secrets["ALPACA_SECRET_KEY"]
+except FileNotFoundError:
+    pass  # local run — credentials already loaded from .env by config.py
 
 logging.basicConfig(level=logging.INFO)
 
