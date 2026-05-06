@@ -17,9 +17,11 @@ from analytics.metrics import compute_metrics
 
 # Override config credentials with Streamlit Cloud secrets if available.
 # This runs on every script execution so it always takes effect.
+_secrets_loaded = False
 try:
     if "ALPACA_API_KEY" in st.secrets:
         config.ALPACA_API_KEY = st.secrets["ALPACA_API_KEY"]
+        _secrets_loaded = True
     if "ALPACA_SECRET_KEY" in st.secrets:
         config.ALPACA_SECRET_KEY = st.secrets["ALPACA_SECRET_KEY"]
 except FileNotFoundError:
@@ -62,6 +64,9 @@ for _key in ("results", "metrics", "trades_df", "equity_df"):
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("📈 Momentum Pump & Dump Backtest Engine")
 st.caption("NASDAQ + AMEX · Daily Bars · Event-Driven · Zero Lookahead Bias")
+
+if not config.ALPACA_API_KEY:
+    st.error("Alpaca API key is missing. Go to Streamlit Cloud → Manage app → Settings → Secrets and add ALPACA_API_KEY and ALPACA_SECRET_KEY.")
 
 # ── Sidebar parameters ────────────────────────────────────────────────────────
 st.sidebar.header("⚙️ Parameters")
