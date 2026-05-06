@@ -72,14 +72,17 @@ class AlpacaDataLoader:
         assets = self.trading_client.get_all_assets(
             GetAssetsRequest(asset_class=AssetClass.US_EQUITY, status=AssetStatus.ACTIVE)
         )
-        target = {"NASDAQ", "NYSE ARCA", "AMEX"}
+        target = {"NASDAQ", "NYSE ARCA", "AMEX", "NYSE", "ARCA"}
         tickers = [
             a.symbol for a in assets
-            if a.exchange.value in target
+            if a.exchange.value.upper() in {t.upper() for t in target}
             and a.tradable
             and not a.symbol.endswith((".", "/"))
             and len(a.symbol) <= 5
         ]
+        if not tickers:
+            logger.error("get_tradeable_tickers returned 0 — check API keys and exchange filter")
+            return []
         pd.DataFrame({"symbol": tickers}).to_parquet(cache_file, index=False)
         logger.info(f"Universe (fresh): {len(tickers)} tickers")
         return tickers
@@ -163,7 +166,8 @@ class AlpacaDataLoader:
             f"Universe selected: {len(result)} symbols "
             f"(scanned {scanned} candidates)"
         )
-        pd.DataFrame({"symbol": result}).to_parquet(cache_file, index=False)
+        if result:
+            pd.DataFrame({"symbol": result}).to_parquet(cache_file, index=False)
         return result
 
     # ── Single ticker ─────────────────────────────────────────────────────────
