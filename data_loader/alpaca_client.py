@@ -65,8 +65,11 @@ class AlpacaDataLoader:
             age_days = (datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)).days
             if age_days < 1:
                 tickers = pd.read_parquet(cache_file)["symbol"].tolist()
-                logger.info(f"Universe (cached): {len(tickers)} tickers")
-                return tickers
+                if tickers:
+                    logger.info(f"Universe (cached): {len(tickers)} tickers")
+                    return tickers
+                logger.warning("Cached ticker list is empty — re-fetching from Alpaca")
+                cache_file.unlink(missing_ok=True)
 
         logger.info("Fetching asset list from Alpaca…")
         assets = self.trading_client.get_all_assets(
@@ -118,8 +121,11 @@ class AlpacaDataLoader:
             ).total_seconds() / 3600
             if age_h < 24:
                 symbols = pd.read_parquet(cache_file)["symbol"].tolist()
-                logger.info(f"Universe loaded from cache: {len(symbols)} symbols (seed={seed})")
-                return symbols
+                if symbols:
+                    logger.info(f"Universe loaded from cache: {len(symbols)} symbols (seed={seed})")
+                    return symbols
+                logger.warning("Cached universe is empty — re-building")
+                cache_file.unlink(missing_ok=True)
 
         all_tickers = self.get_tradeable_tickers()
         rng = random.Random(seed)
